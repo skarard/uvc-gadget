@@ -15,7 +15,9 @@ void uvc_apply_format(struct processing *processing)
         fmt.fmt.pix.field = V4L2_FIELD_ANY;
         fmt.fmt.pix.width = events->apply_frame_format->wWidth;
         fmt.fmt.pix.height = events->apply_frame_format->wHeight;
-        fmt.fmt.pix.pixelformat = events->apply_frame_format->video_format;
+        fmt.fmt.pix.pixelformat = ((events->apply_frame_format->video_format == V4L2_PIX_FMT_JPEG)
+                                       ? V4L2_PIX_FMT_MJPEG
+                                       : (uint)events->apply_frame_format->video_format);
         fmt.fmt.pix.sizeimage = fmt.fmt.pix.width * fmt.fmt.pix.height *
                                 ((fmt.fmt.pix.pixelformat == V4L2_PIX_FMT_YUYV) ? 2 : 1);
 

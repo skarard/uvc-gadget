@@ -122,7 +122,7 @@ static int configfs_video_format(const char *format)
 {
     if (!strncmp(format, "m", 1))
     {
-        return V4L2_PIX_FMT_MJPEG;
+        return V4L2_PIX_FMT_JPEG;
     }
     else if (!strncmp(format, "u", 1))
     {
