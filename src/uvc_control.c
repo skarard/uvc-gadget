@@ -171,7 +171,8 @@ void uvc_fill_streaming_control(struct processing *processing,
         iformat = ctrl_in->bFormatIndex;
         iframe = ctrl_in->bFrameIndex;
 
-        if (action == STREAM_CONTROL_SET) {
+        if (action == STREAM_CONTROL_SET)
+        {
             printf("UVC: SET format: %d, frame: %d\n", iformat, iframe);
         }
 

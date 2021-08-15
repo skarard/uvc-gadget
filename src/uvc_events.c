@@ -146,7 +146,7 @@ static void uvc_events_process_streaming(struct processing *processing)
         break;
 
     case UVC_GET_MAX:
-        uvc_fill_streaming_control(processing, ctrl, STREAM_CONTROL_MAX, ctrl);
+        uvc_fill_streaming_control(processing, ctrl, STREAM_CONTROL_MAX, NULL);
         break;
 
     case UVC_GET_CUR:
@@ -157,7 +157,7 @@ static void uvc_events_process_streaming(struct processing *processing)
 
     case UVC_GET_MIN:
     case UVC_GET_DEF:
-        uvc_fill_streaming_control(processing, ctrl, STREAM_CONTROL_MIN, ctrl);
+        uvc_fill_streaming_control(processing, ctrl, STREAM_CONTROL_MIN, NULL);
         break;
 
     case UVC_GET_RES:

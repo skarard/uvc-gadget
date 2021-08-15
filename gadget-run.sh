@@ -24,7 +24,11 @@ echo "INFO:  Gadget config path: ${GADGET_PATH}"
 # Include configuration files
 for CONFIG_PATH in "$@"
 do
-    if [ "${CONFIG_PATH}" = "fps" ]; then
+
+    if [ "${CONFIG_PATH}" = "init" ]; then
+        INIT_ONLY=true
+
+    elif [ "${CONFIG_PATH}" = "fps" ]; then
         SHOW_FPS=true
 
     elif [ -e "${CONFIG_PATH}" ]; then
@@ -198,6 +202,20 @@ if [ "${INIT_UVC}" = true ]; then
 
     fi
 
+    if [ "${STDIN_STREAM}" ]; then
+        echo "INFO:  Stream: ${STDIN_STREAM}"
+        UVC_GADGET_PARAMS+=("-s")
+        UVC_GADGET_PARAMS+=("${STDIN_STREAM}")
+
+    fi
+
+    if [ "${STDIN_WIDTH}" ]; then
+        echo "INFO:  Stream width x height: ${STDIN_WIDTH}x${STDIN_HEIGHT}"
+        UVC_GADGET_PARAMS+=("-m")
+        UVC_GADGET_PARAMS+=("${STDIN_WIDTH}x${STDIN_HEIGHT}")
+
+    fi
+
     if [ "${SET_FPS}" ]; then
         echo "INFO:  Set FPS: ${SET_FPS}"
         UVC_GADGET_PARAMS+=("-r")
@@ -212,7 +230,14 @@ if [ "${INIT_UVC}" = true ]; then
     fi
 
     cd "${UVC_GADGET_PATH}"
-    ./uvc-gadget "${UVC_GADGET_PARAMS[@]}"
+
+    if [ "${INIT_ONLY}" ]; then
+        echo "EXECUTE: ./uvc-gadget" "${UVC_GADGET_PARAMS[@]}"
+
+    else
+        ./uvc-gadget "${UVC_GADGET_PARAMS[@]}"
+
+    fi
 
 fi
 

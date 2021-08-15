@@ -28,6 +28,7 @@
 #include <linux/usb/video.h>
 #include <linux/videodev2.h>
 #include <linux/fb.h>
+#include <linux/uvcvideo.h>
 
 #define max(a, b) (((a) > (b)) ? (a) : (b))
 
@@ -93,13 +94,22 @@ struct buffer
     size_t length;
 };
 
+struct stdin_buffer {
+    void *start;
+    size_t length;
+    unsigned int bytesused;
+    unsigned int index;
+    bool filled;
+};
+
 enum endpoint_type
 {
     ENDPOINT_NONE,
     ENDPOINT_V4L2,
     ENDPOINT_UVC,
     ENDPOINT_FB,
-    ENDPOINT_IMAGE
+    ENDPOINT_IMAGE,
+    ENDPOINT_STDIN
 };
 
 enum stream_action
@@ -196,6 +206,16 @@ struct endpoint_image
     int inotify_fd;
 };
 
+struct endpoint_stdin
+{
+    unsigned int stdin_format;
+    unsigned int width;
+    unsigned int height;
+    struct stdin_buffer *buffer_use;
+    struct stdin_buffer *buffer_fill;
+    struct stdin_buffer *buffers;
+};
+
 struct endpoint
 {
     enum endpoint_type type;
@@ -203,6 +223,7 @@ struct endpoint
     struct endpoint_uvc uvc;
     struct endpoint_fb fb;
     struct endpoint_image image;
+    struct endpoint_stdin stdin;
     int state;
 };
 
@@ -314,5 +335,53 @@ struct processing
 
     bool *terminate;
 };
+
+// RGB to YUYV
+
+struct px {
+    uint8_t ignore1 : 1;
+    uint8_t r : 7;
+    uint8_t ignore2 : 1;
+    uint8_t g : 7;
+    uint8_t ignore3 : 1;
+    uint8_t b : 7;
+    uint8_t a;
+};
+
+struct py {
+    uint8_t ignore1 : 2;
+    uint8_t r : 6;
+    uint8_t ignore2 : 1;
+    uint8_t g : 7;
+    uint8_t ignore3 : 3;
+    uint8_t b : 5;
+    uint8_t a;
+};
+
+struct rgb_pixel {
+    union {
+        struct px x1;
+        struct py y1;
+        unsigned int rgba1;
+    };
+    union {
+        struct px x2;
+        struct py y2;
+        unsigned int rgba2;
+    };
+};
+
+struct yuyv_pixel {
+    union {
+        struct z {
+            uint8_t y1;
+            uint8_t u;
+            uint8_t y2;
+            uint8_t v;
+        } z;
+        unsigned int yuyv;
+    };
+};
+
 
 #endif // end HEADERS

@@ -7,6 +7,7 @@
 #include "uvc_endpoint.h"
 #include "fb_endpoint.h"
 #include "image_endpoint.h"
+#include "stdin_endpoint.h"
 #include "uvc_events.h"
 #include "uvc_control.h"
 #include "uvc_device_detect.h"
@@ -16,12 +17,14 @@ struct processing processing;
 bool show_fps = false;
 bool debug = false;
 bool streaming_status_onboard = false;
-bool autodetect_uvc_device = true;
 bool autodetect_uvc_device = false;
 const char *fb_device_name;
 const char *uvc_device_name;
 const char *v4l2_device_name;
 const char *image_path;
+unsigned int stdin_format;
+unsigned int stdin_width;
+unsigned int stdin_height;
 char *streaming_status_pin;
 int blink_on_startup = 0;
 int fb_framerate = 60;
@@ -33,6 +36,7 @@ void cleanup()
     image_close(&processing);
     v4l2_close(&processing);
     uvc_close(&processing);
+    stdin_buffer_free(&processing);
 
     printf("UVC-GADGET: Exit\n");
 }
@@ -66,6 +70,7 @@ int init()
     v4l2_init(&processing, v4l2_device_name, nbufs);
     fb_init(&processing, fb_device_name);
     image_init(&processing, image_path);
+    stdin_init(&processing, stdin_format, stdin_width, stdin_height);
 
     if (uvc_device_name)
     {
@@ -97,8 +102,6 @@ int init()
 
     if (processing.target.type == ENDPOINT_UVC)
     {
-        uvc_fill_streaming_control(&processing, &(processing.target.uvc.probe), STREAM_CONTROL_INIT, 0, 0);
-        uvc_fill_streaming_control(&processing, &(processing.target.uvc.commit), STREAM_CONTROL_INIT, 0, 0);
         uvc_fill_streaming_control(&processing, &(processing.target.uvc.probe), STREAM_CONTROL_INIT, NULL);
         uvc_fill_streaming_control(&processing, &(processing.target.uvc.commit), STREAM_CONTROL_INIT, NULL);
 
@@ -124,15 +127,18 @@ static void usage(const char *argv0)
 {
     fprintf(stderr, "Usage: %s [options]\n", argv0);
     fprintf(stderr, "Available options are\n");
+    fprintf(stderr, " -a          Find UVC device automatically\n");
     fprintf(stderr, " -b value    Blink X times on startup (b/w 1 and 20 with led0 or GPIO pin if defined)\n");
     fprintf(stderr, " -d          Enable debug messages\n");
     fprintf(stderr, " -f device   Framebuffer device\n");
     fprintf(stderr, " -h          Print this help screen and exit\n");
     fprintf(stderr, " -i image    MJPEG/YUYV image\n");
     fprintf(stderr, " -l          Use onboard led0 for streaming status indication\n");
+    fprintf(stderr, " -m value    STDIN stream dimension (WIDTHxHEIGHT like 800x600)\n");
     fprintf(stderr, " -n value    Number of Video buffers (b/w 2 and 32)\n");
     fprintf(stderr, " -p value    GPIO pin number for streaming status indication\n");
     fprintf(stderr, " -r value    Framerate for framebuffer (b/w 1 and 60)\n");
+    fprintf(stderr, " -s value    STDIN stream type (MJPEG/YUYV)\n");
     fprintf(stderr, " -u device   UVC Video Output device\n");
     fprintf(stderr, " -v device   V4L2 Video Capture device\n");
     fprintf(stderr, " -x          Show fps information\n");
@@ -142,7 +148,7 @@ int main(int argc, char *argv[])
 {
     int opt;
 
-    while ((opt = getopt(argc, argv, "adhlb:f:i:n:p:r:u:v:x")) != -1)
+    while ((opt = getopt(argc, argv, "adhlb:f:i:m:n:p:r:s:u:v:x")) != -1)
     {
         switch (opt)
         {
@@ -179,6 +185,14 @@ int main(int argc, char *argv[])
             streaming_status_onboard = true;
             break;
 
+        case 'm':
+            if (2 != sscanf(optarg, "%dx%d", &stdin_width, &stdin_height))
+            {
+                fprintf(stderr, "ERROR: Wrong input stream dimension - %s\n", optarg);
+                goto err;
+            }
+            break;
+
         case 'n':
             if (atoi(optarg) < 2 || atoi(optarg) > 32)
             {
@@ -199,6 +213,22 @@ int main(int argc, char *argv[])
                 goto err;
             }
             fb_framerate = atoi(optarg);
+            break;
+
+        case 's':
+            if (!strncmp(optarg, "MJPEG", 5))
+            {
+                stdin_format = V4L2_PIX_FMT_MJPEG;
+            }
+            else if (!strncmp(optarg, "YUYV", 4))
+            {
+                stdin_format = V4L2_PIX_FMT_YUYV;
+            }
+            else
+            {
+                fprintf(stderr, "ERROR: Wrong input stream type\n");
+                goto err;
+            }
             break;
 
         case 'u':

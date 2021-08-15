@@ -12,15 +12,18 @@ A new version of uvc-gadget with totally rewriten source code to be more flexibl
     Usage: ./uvc-gadget [options]
     
     Available options are
+        -a             Find UVC device automatically
         -b value       Blink X times on startup (b/w 1 and 20 with led0 or GPIO pin if defined)
         -d             Enable debug messages
         -f device      Framebuffer device
         -h             Print this help screen and exit
         -i image       MJPEG/YUYV image
         -l             Use onboard led0 for streaming status indication
+        -m value       STDIN stream dimension (WIDTHxHEIGHT like 800x600)
         -n value       Number of Video buffers (b/w 2 and 32)
         -p value       GPIO pin number for streaming status indication
         -r value       Framerate for framebuffer (b/w 1 and 30)
+        -s value       STDIN stream type (MJPEG/YUYV)
         -u device      UVC Video Output device
         -v device      V4L2 Video Capture device
         -x             Show fps information

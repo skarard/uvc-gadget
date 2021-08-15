@@ -54,6 +54,7 @@ void processing_loop_image_uvc(struct processing *processing)
     struct timeval tv;
     double next_frame_time = 0;
     double now;
+    double sleep_time;
     fd_set fdsu, fdsi;
 
     printf("PROCESSING: IMAGE %s -> UVC %s\n", image->image_path, uvc->device_name);
@@ -68,7 +69,14 @@ void processing_loop_image_uvc(struct processing *processing)
         fd_set efds = fdsu;
         fd_set dfds = fdsu;
 
-        nanosleep((const struct timespec[]){{0, 1000000L}}, NULL);
+        now = processing_now();
+        sleep_time = next_frame_time - now;
+        if (sleep_time < 3)
+        {
+            sleep_time = 3;
+        }
+
+        nanosleep((const struct timespec[]){{0, 1000000L * (sleep_time - 2)}}, NULL);
 
         tv.tv_sec = 1;
         tv.tv_usec = 0;
@@ -100,8 +108,6 @@ void processing_loop_image_uvc(struct processing *processing)
         {
             uvc_events_process(processing);
         }
-
-        now = processing_now();
 
         if (FD_ISSET(uvc->fd, &dfds))
         {

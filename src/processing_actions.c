@@ -24,7 +24,9 @@ void processing_internals(struct processing *processing)
 
     if (events->shutdown_requested)
     {
-        *(processing->terminate) = true;
+        // *(processing->terminate) = true;
+        events->stream = STREAM_OFF;
+        events->shutdown_requested = false;
     }
 
     if (settings->show_fps && uvc->is_streaming)

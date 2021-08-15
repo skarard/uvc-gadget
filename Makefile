@@ -9,10 +9,12 @@ OBJFILES = src/configfs.o                   \
 			src/v4l2_endpoint.o             \
 			src/fb_endpoint.o               \
 			src/image_endpoint.o            \
+			src/stdin_endpoint.o            \
 			src/processing_actions.o        \
 			src/processing_fb_uvc.o         \
 			src/processing_image_uvc.o      \
 			src/processing_v4l2_uvc.o       \
+			src/processing_stdin_uvc.o      \
 			src/uvc_device_detect.o         \
 			src/uvc_endpoint.o              \
 			src/uvc_control.o               \

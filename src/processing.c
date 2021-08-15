@@ -3,6 +3,7 @@
 #include "processing_fb_uvc.h"
 #include "processing_image_uvc.h"
 #include "processing_v4l2_uvc.h"
+#include "processing_stdin_uvc.h"
 #include "processing_actions.h"
 
 static bool terminate = 0;
@@ -38,6 +39,10 @@ void processing_loop(struct processing *processing)
 
         case ENDPOINT_V4L2:
             processing_loop_v4l2_uvc(processing);
+            break;
+
+        case ENDPOINT_STDIN:
+            processing_loop_stdin_uvc(processing);
             break;
 
         default:
