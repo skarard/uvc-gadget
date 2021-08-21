@@ -27,7 +27,7 @@ int image_load(struct processing *processing)
     data = malloc(image->size);
     if (data == NULL)
     {
-        printf("Unable to allocate memory for MJPEG image\n");
+        printf("IMAGE: Unable to allocate memory for MJPEG image\n");
         image->size = 0;
         return -1;
     }

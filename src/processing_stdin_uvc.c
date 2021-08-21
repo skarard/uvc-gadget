@@ -19,8 +19,6 @@ static void stdin_uvc_video_process(struct processing *processing)
         return;
     }
 
-    // printf("stdin_uvc_video_process - buffer: %d, used: %d\n", stdin_buffer->index, stdin_buffer->bytesused);
-
     memset(&uvc_buffer, 0, sizeof(struct v4l2_buffer));
     uvc_buffer.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
     uvc_buffer.memory = V4L2_MEMORY_USERPTR;

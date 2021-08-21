@@ -338,7 +338,38 @@ struct processing
 
 // RGB to YUYV
 
-struct px {
+struct px24 {
+    uint8_t ignore1 : 1;
+    uint8_t r : 7;
+    uint8_t ignore2 : 1;
+    uint8_t g : 7;
+    uint8_t ignore3 : 1;
+    uint8_t b : 7;
+};
+
+struct py24 {
+    uint8_t ignore1 : 2;
+    uint8_t r : 6;
+    uint8_t ignore2 : 1;
+    uint8_t g : 7;
+    uint8_t ignore3 : 3;
+    uint8_t b : 5;
+};
+
+struct rgb_pixel24 {
+    union {
+        struct px24 x1;
+        struct py24 y1;
+        unsigned int rgba1;
+    };
+    union {
+        struct px24 x2;
+        struct py24 y2;
+        unsigned int rgba2;
+    };
+};
+
+struct px32 {
     uint8_t ignore1 : 1;
     uint8_t r : 7;
     uint8_t ignore2 : 1;
@@ -348,7 +379,7 @@ struct px {
     uint8_t a;
 };
 
-struct py {
+struct py32 {
     uint8_t ignore1 : 2;
     uint8_t r : 6;
     uint8_t ignore2 : 1;
@@ -358,15 +389,15 @@ struct py {
     uint8_t a;
 };
 
-struct rgb_pixel {
+struct rgb_pixel32 {
     union {
-        struct px x1;
-        struct py y1;
+        struct px32 x1;
+        struct py32 y1;
         unsigned int rgba1;
     };
     union {
-        struct px x2;
-        struct py y2;
+        struct px32 x2;
+        struct py32 y2;
         unsigned int rgba2;
     };
 };

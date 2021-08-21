@@ -11,10 +11,6 @@ static void fb_fill_uvc_buffer(struct processing *processing,
     struct endpoint_fb *fb = &processing->source.fb;
     struct endpoint_uvc *uvc = &processing->target.uvc;
 
-    unsigned int rgba1;
-    unsigned int rgba2;
-    unsigned int rgba1_last = 0;
-    unsigned int rgba2_last = 0;
     unsigned int yvyu = 0;
     unsigned char r1;
     unsigned char b1;
@@ -30,10 +26,12 @@ static void fb_fill_uvc_buffer(struct processing *processing,
     char *fb_pixels = (char *)fb->memory;
     uvc_bufer->bytesused = size * 2;
 
-    struct rgb_pixel rgb_pixel;
+    struct rgb_pixel24 rgb_pixel24;
+    struct rgb_pixel32 rgb_pixel32;
     struct yuyv_pixel yuyv_pixel;
 
-    memset(&rgb_pixel, 0, sizeof(struct rgb_pixel));
+    memset(&rgb_pixel24, 0, sizeof(struct rgb_pixel24));
+    memset(&rgb_pixel32, 0, sizeof(struct rgb_pixel32));
     memset(&yuyv_pixel, 0, sizeof(unsigned int));
 
     switch (fb->bpp)
@@ -58,21 +56,19 @@ static void fb_fill_uvc_buffer(struct processing *processing,
     case 24:
         while (size)
         {
-            memcpy(&rgba1, fb_pixels, 3);
-            memcpy(&rgba2, fb_pixels + 3, 3);
-            if (rgba1 != rgba1_last || rgba2 != rgba2_last)
-            {
-                r1 = (rgba1 >> 1) & 0xFF;
-                g1 = (rgba1 >> 9) & 0x7F;
-                b1 = (rgba1 >> 17) & 0x7F;
-                r2 = (rgba2 >> 1) & 0xFF;
-                g2 = (rgba2 >> 9) & 0x7F;
-                b2 = (rgba2 >> 17) & 0x7F;
-                yvyu = rgb2yvyu_opt(r1, g1, b1, r2, g2, b2);
-                rgba1_last = rgba1;
-                rgba2_last = rgba2;
-            }
-            memcpy(uvc_pixels, &yvyu, 4);
+            memcpy(&rgb_pixel24.rgba1, fb_pixels, 3);
+            memcpy(&rgb_pixel24.rgba2, fb_pixels + 3, 3);
+
+            r12 = rgb_pixel24.x1.r + rgb_pixel24.x2.r;
+            g12 = rgb_pixel24.x1.g + rgb_pixel24.x2.g;
+            b12 = rgb_pixel24.x1.b + rgb_pixel24.x2.b;
+
+            yuyv_pixel.z.y1 = rgb_pixel24.y1.r + rgb_pixel24.y1.g + rgb_pixel24.y1.b + 16;
+            yuyv_pixel.z.u = mult_112[r12] - mult_94[g12] - mult_18[b12];
+            yuyv_pixel.z.y2 = rgb_pixel24.y2.r + rgb_pixel24.y2.g + rgb_pixel24.y2.b + 16;
+            yuyv_pixel.z.v = mult_112[b12] - mult_38[r12] - mult_74[g12];
+
+            memcpy(uvc_pixels, &yuyv_pixel.yuyv, 4);
 
             fb_pixels += 6;
             uvc_pixels += 4;
@@ -83,15 +79,15 @@ static void fb_fill_uvc_buffer(struct processing *processing,
     case 32:
         while (size)
         {
-            memcpy(&rgb_pixel, fb_pixels, 8);
+            memcpy(&rgb_pixel32, fb_pixels, 8);
 
-            r12 = rgb_pixel.x1.r + rgb_pixel.x2.r;
-            g12 = rgb_pixel.x1.g + rgb_pixel.x2.g;
-            b12 = rgb_pixel.x1.b + rgb_pixel.x2.b;
+            r12 = rgb_pixel32.x1.r + rgb_pixel32.x2.r;
+            g12 = rgb_pixel32.x1.g + rgb_pixel32.x2.g;
+            b12 = rgb_pixel32.x1.b + rgb_pixel32.x2.b;
 
-            yuyv_pixel.z.y1 = rgb_pixel.y1.r + rgb_pixel.y1.g + rgb_pixel.y1.b + 16;
+            yuyv_pixel.z.y1 = rgb_pixel32.y1.r + rgb_pixel32.y1.g + rgb_pixel32.y1.b + 16;
             yuyv_pixel.z.u = mult_112[r12] - mult_94[g12] - mult_18[b12];
-            yuyv_pixel.z.y2 = rgb_pixel.y2.r + rgb_pixel.y2.g + rgb_pixel.y2.b + 16;
+            yuyv_pixel.z.y2 = rgb_pixel32.y2.r + rgb_pixel32.y2.g + rgb_pixel32.y2.b + 16;
             yuyv_pixel.z.v = mult_112[b12] - mult_38[r12] - mult_74[g12];
 
             memcpy(uvc_pixels, &yuyv_pixel.yuyv, 4);
