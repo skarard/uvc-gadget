@@ -109,13 +109,14 @@ void processing_loop_v4l2_uvc(struct processing *processing)
 {
     struct endpoint_v4l2 *v4l2 = &processing->source.v4l2;
     struct endpoint_uvc *uvc = &processing->target.uvc;
+    struct events *events = &processing->events;
     struct timeval tv;
     int activity;
     fd_set fdsv, fdsu;
 
     printf("PROCESSING: V4L2 %s -> UVC %s\n", v4l2->device_name, uvc->device_name);
 
-    while (!*(processing->terminate))
+    while (!*(events->terminate))
     {
         FD_ZERO(&fdsv);
         FD_ZERO(&fdsu);
@@ -161,7 +162,7 @@ void processing_loop_v4l2_uvc(struct processing *processing)
             uvc_events_process(processing);
         }
 
-        if (v4l2->is_streaming)
+        if (v4l2->is_streaming && !*(events->stopped))
         {
             if (FD_ISSET(uvc->fd, &dfds))
             {

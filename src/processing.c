@@ -6,25 +6,54 @@
 #include "processing_stdin_uvc.h"
 #include "processing_actions.h"
 
-static bool terminate = 0;
+static bool terminate = false;
+static bool stopped = false;
 
-void term(int signum)
+void onSignal(int signum)
 {
-    printf("\nTERMINATE: Signal %s\n", (signum == SIGTERM) ? "SIGTERM" : "SIGINT");
-    terminate = true;
+    switch (signum)
+    {
+    case SIGTERM:
+    case SIGINT:
+        printf("\nSIGNAL: Signal %s\n", (signum == SIGTERM) ? "TERMINATE" : "INTERRUPT");
+        terminate = true;
+        break;
+
+    case SIGUSR1:
+        printf("\nSIGNAL: Signal USER-DEFINED 1, STOP STREAMING%s\n", (stopped) ? " - Already stopped" : "");
+        stopped = true;
+        break;
+
+    case SIGUSR2:
+        printf("\nSIGNAL: Signal USER-DEFINED 2, RESUME STREAMING%s\n", (!stopped) ? " - Already running" : "");
+        stopped = false;
+        break;
+
+    default:
+        break;
+    }
 }
 
 void processing_loop(struct processing *processing)
 {
-    struct sigaction action;
-    memset(&action, 0, sizeof(struct sigaction));
+    struct events *events = &processing->events;
+    // struct sigaction action;
+    // memset(&action, 0, sizeof(struct sigaction));
 
-    action.sa_handler = term;
-    sigaction(SIGTERM, &action, NULL);
-    sigaction(SIGINT, &action, NULL);
+    // action.sa_handler = onSignal;
+    // sigaction(SIGTERM, &action, NULL);
+    // sigaction(SIGINT, &action, NULL);
+    // sigaction(SIGUSR1, &action, NULL);
+    // sigaction(SIGUSR2, &action, NULL);
 
-    processing->terminate = &terminate;
+    signal(SIGTERM, onSignal);
+    signal(SIGINT, onSignal);
+    signal(SIGUSR1, onSignal);
+    signal(SIGUSR2, onSignal);
 
+    events->terminate = &terminate;
+    events->stopped = &stopped;
+ 
     if (processing->target.type == ENDPOINT_UVC)
     {
         switch (processing->source.type)

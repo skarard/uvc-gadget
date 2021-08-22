@@ -138,6 +138,7 @@ void processing_loop_stdin_uvc(struct processing *processing)
 {
     struct endpoint_stdin *stdin = &processing->source.stdin;
     struct endpoint_uvc *uvc = &processing->target.uvc;
+    struct events *events = &processing->events;
 
     int activity;
     struct timeval tv;
@@ -148,7 +149,7 @@ void processing_loop_stdin_uvc(struct processing *processing)
         uvc->device_name
     );
 
-    while (!*(processing->terminate))
+    while (!*(events->terminate))
     {
         FD_ZERO(&fdsu);
         FD_ZERO(&fdsi);
@@ -161,7 +162,7 @@ void processing_loop_stdin_uvc(struct processing *processing)
 
         nanosleep((const struct timespec[]){{0, 500000L}}, NULL);
 
-        if (uvc->is_streaming)
+        if (uvc->is_streaming && !*(events->stopped))
         {
             fill_buffer_from_stdin(processing);
         }
@@ -194,7 +195,10 @@ void processing_loop_stdin_uvc(struct processing *processing)
 
         if (FD_ISSET(uvc->fd, &dfds))
         {
-            stdin_uvc_video_process(processing);
+            if (!*(events->stopped))
+            {
+                stdin_uvc_video_process(processing);
+            }
         }
 
         processing_internals(processing);

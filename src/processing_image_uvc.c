@@ -49,6 +49,7 @@ void processing_loop_image_uvc(struct processing *processing)
     struct endpoint_image *image = &processing->source.image;
     struct endpoint_uvc *uvc = &processing->target.uvc;
     struct settings *settings = &processing->settings;
+    struct events *events = &processing->events;
 
     int activity;
     struct timeval tv;
@@ -59,7 +60,7 @@ void processing_loop_image_uvc(struct processing *processing)
 
     printf("PROCESSING: IMAGE %s -> UVC %s\n", image->image_path, uvc->device_name);
 
-    while (!*(processing->terminate))
+    while (!*(events->terminate))
     {
         FD_ZERO(&fdsu);
         FD_ZERO(&fdsi);
@@ -99,9 +100,17 @@ void processing_loop_image_uvc(struct processing *processing)
             break;
         }
 
-        if (FD_ISSET(image->inotify_fd, &fdsi))
+        if (FD_ISSET(image->inotify_fd, &fdsi) || events->get_next_frame)
         {
-            image_load(processing);
+            if (*(events->stopped))
+            {
+                events->get_next_frame = true;
+            }
+            else
+            {
+                image_load(processing);
+                events->get_next_frame = false;
+            }
         }
 
         if (FD_ISSET(uvc->fd, &efds))
@@ -111,10 +120,14 @@ void processing_loop_image_uvc(struct processing *processing)
 
         if (FD_ISSET(uvc->fd, &dfds))
         {
-            if (now >= next_frame_time)
+            if (!*(events->stopped))
             {
-                image_uvc_video_process(processing);
-                next_frame_time = now + settings->frame_interval;
+                if (now >= next_frame_time)
+                {
+                    image_uvc_video_process(processing);
+                    next_frame_time = now + settings->frame_interval;
+                }
+                events->get_next_frame = false;
             }
         }
 

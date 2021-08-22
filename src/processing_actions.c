@@ -24,7 +24,7 @@ void processing_internals(struct processing *processing)
 
     if (events->shutdown_requested)
     {
-        // *(processing->terminate) = true;
+        // *(events->terminate) = true;
         events->stream = STREAM_OFF;
         events->shutdown_requested = false;
     }

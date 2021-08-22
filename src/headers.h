@@ -282,6 +282,9 @@ struct events
     struct frame_format *apply_frame_format;
     struct control_mapping_pair *control;
     bool apply_control;
+    bool get_next_frame;
+    bool *terminate;
+    bool *stopped;
 };
 
 // CONFIGFS
@@ -332,8 +335,6 @@ struct processing
     struct settings settings;
     struct internals internals;
     struct uvc_request uvc_request;
-
-    bool *terminate;
 };
 
 // RGB to YUYV

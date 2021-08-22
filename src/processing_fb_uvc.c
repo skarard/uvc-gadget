@@ -142,6 +142,7 @@ void processing_loop_fb_uvc(struct processing *processing)
     struct endpoint_fb *fb = &processing->source.fb;
     struct endpoint_uvc *uvc = &processing->target.uvc;
     struct settings *settings = &processing->settings;
+    struct events *events = &processing->events;
 
     int activity;
     double next_frame_time = 0;
@@ -151,7 +152,7 @@ void processing_loop_fb_uvc(struct processing *processing)
 
     printf("PROCESSING: FB %s -> UVC %s\n", fb->device_name, uvc->device_name);
 
-    while (!*(processing->terminate))
+    while (!*(events->terminate))
     {
         FD_ZERO(&fdsu);
         FD_SET(uvc->fd, &fdsu);
@@ -193,11 +194,14 @@ void processing_loop_fb_uvc(struct processing *processing)
 
         if (FD_ISSET(uvc->fd, &dfds))
         {
-            if (now >= next_frame_time && fb->memory)
+            if (!*(events->stopped))
             {
-                fb_uvc_video_process(processing);
+                if (now >= next_frame_time && fb->memory)
+                {
+                    fb_uvc_video_process(processing);
 
-                next_frame_time = now + settings->frame_interval;
+                    next_frame_time = now + settings->frame_interval;
+                }
             }
         }
 
