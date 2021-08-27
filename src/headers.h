@@ -211,6 +211,8 @@ struct endpoint_stdin
     unsigned int stdin_format;
     unsigned int width;
     unsigned int height;
+    unsigned int buffer_size;
+    bool fill_buffer;
     struct stdin_buffer *buffer_use;
     struct stdin_buffer *buffer_fill;
     struct stdin_buffer *buffers;

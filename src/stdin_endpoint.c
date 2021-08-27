@@ -20,8 +20,8 @@ int stdin_buffer_init(struct processing *processing)
     {
         stdin->buffers[i].index = i;
         stdin->buffers[i].filled = false;
-        stdin->buffers[i].length = 4147200;
-        stdin->buffers[i].start = malloc(4147200);
+        stdin->buffers[i].length = stdin->buffer_size;
+        stdin->buffers[i].start = malloc(stdin->buffer_size);
         if (!stdin->buffers[i].start)
         {
             printf("STDIN: Out of memory\n");
@@ -69,6 +69,7 @@ void stdin_init(struct processing *processing,
         printf("STDIN: Initialize stdin\n");
 
         stdin->stdin_format = stdin_format;
+        stdin->buffer_size = width * height * 2;
         stdin->width = width;
         stdin->height = height;
 
@@ -78,9 +79,10 @@ void stdin_init(struct processing *processing,
             return;
         }
 
+        stdin->fill_buffer = true;
         processing->source.type = ENDPOINT_STDIN;
         processing->source.state = true;
         settings->uvc_buffer_required = true;
-        settings->uvc_buffer_size = 4147200;
+        settings->uvc_buffer_size = stdin->buffer_size;
     }
 }

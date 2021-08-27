@@ -37,6 +37,7 @@ static void stdin_uvc_video_process(struct processing *processing)
         return;
     }
 
+    stdin->fill_buffer = true;
     uvc->qbuf_count++;
 
     if (settings->show_fps)
@@ -52,11 +53,16 @@ void swap_buffers(struct processing *processing)
     unsigned int index_fill = (stdin->buffer_fill->index == 0) ? 1 : 0;
 
     stdin->buffer_use = stdin->buffer_fill;
+    stdin->buffer_use->filled = true;
 
     stdin->buffer_fill = &stdin->buffers[index_fill];
 
     stdin->buffer_fill->filled = false;
     stdin->buffer_fill->bytesused = 0;
+
+    stdin->fill_buffer = false;
+
+    printf("STDIN: Buffers swapped, now fill the buffer #%d\n", index_fill);
 }
 
 void fill_buffer_from_stdin(struct processing *processing)
@@ -97,7 +103,6 @@ void fill_buffer_from_stdin(struct processing *processing)
             {
                 if (c == 0xD9)
                 {
-                    stdin_buffer->filled = true;
                     swap_buffers(processing);
                     break;
                 }
@@ -119,7 +124,6 @@ void fill_buffer_from_stdin(struct processing *processing)
 
             if (bytesused == frame_size)
             {
-                stdin_buffer->filled = true;
                 swap_buffers(processing);
                 break;
             }
@@ -130,24 +134,33 @@ void fill_buffer_from_stdin(struct processing *processing)
     stdin_buffer->bytesused = bytesused;
     if (settings->debug)
     {
-        printf("STDIN: frame readed %d\n", bytesused);
+        printf("STDIN: Frame readed %d bytes\n", bytesused);
     }
 }
 
 void processing_loop_stdin_uvc(struct processing *processing)
 {
+    struct settings *settings = &processing->settings;
     struct endpoint_stdin *stdin = &processing->source.stdin;
     struct endpoint_uvc *uvc = &processing->target.uvc;
     struct events *events = &processing->events;
+    struct stdin_buffer *stdin_buffer = stdin->buffer_fill;
 
     int activity;
     struct timeval tv;
+    double next_frame_time = 0;
+    double now;
     fd_set fdsu, fdsi;
 
     printf("PROCESSING: STDIN %c%c%c%c -> UVC %s\n",
         pixfmtstr(stdin->stdin_format),
         uvc->device_name
     );
+
+    while (!stdin_buffer->filled)
+    {
+        fill_buffer_from_stdin(processing);
+    }
 
     while (!*(events->terminate))
     {
@@ -160,12 +173,12 @@ void processing_loop_stdin_uvc(struct processing *processing)
         fd_set efds = fdsu;
         fd_set dfds = fdsu;
 
-        nanosleep((const struct timespec[]){{0, 500000L}}, NULL);
-
-        if (uvc->is_streaming && !*(events->stopped))
+        if (stdin->fill_buffer)
         {
             fill_buffer_from_stdin(processing);
         }
+
+        nanosleep((const struct timespec[]){{0, 1000000L}}, NULL);
 
         tv.tv_sec = 1;
         tv.tv_usec = 0;
@@ -193,11 +206,15 @@ void processing_loop_stdin_uvc(struct processing *processing)
             uvc_events_process(processing);
         }
 
+        now = processing_now();
+
         if (FD_ISSET(uvc->fd, &dfds))
         {
-            if (!*(events->stopped))
+            if (!*(events->stopped) && now >= next_frame_time)
             {
                 stdin_uvc_video_process(processing);
+
+                next_frame_time = now + settings->frame_interval;
             }
         }
 

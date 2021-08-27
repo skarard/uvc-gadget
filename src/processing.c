@@ -37,14 +37,6 @@ void onSignal(int signum)
 void processing_loop(struct processing *processing)
 {
     struct events *events = &processing->events;
-    // struct sigaction action;
-    // memset(&action, 0, sizeof(struct sigaction));
-
-    // action.sa_handler = onSignal;
-    // sigaction(SIGTERM, &action, NULL);
-    // sigaction(SIGINT, &action, NULL);
-    // sigaction(SIGUSR1, &action, NULL);
-    // sigaction(SIGUSR2, &action, NULL);
 
     signal(SIGTERM, onSignal);
     signal(SIGINT, onSignal);
