@@ -15,6 +15,7 @@
 #include <time.h>
 #include <ftw.h>
 #include <dirent.h>
+#include <ctype.h>
 
 #include <sys/ioctl.h>
 #include <sys/inotify.h>
@@ -299,6 +300,8 @@ struct streaming
 
 struct configfs
 {
+    char mount_point[255];
+    bool mount_point_found;
     struct streaming streaming;
     struct frame_format frame_format[30];
     unsigned int frame_format_size;

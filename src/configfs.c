@@ -249,8 +249,80 @@ static int configfs_read(const char *fpath,
     return 0;
 }
 
-int configfs_init(struct processing *processing,
-                  const char *configfs_path)
+static char *ltrim(char *s)
+{
+    while (isspace(*s))
+    {
+        s++;
+    }
+    return s;
+}
+
+static char *rtrim(char *s)
+{
+    char *back = s + strlen(s);
+    while (isspace(*--back))
+        ;
+    *(back + 1) = '\0';
+    return s;
+}
+
+static char *trim(char *s)
+{
+    return rtrim(ltrim(s));
+}
+
+void configfs_get_mountpoint(struct processing *processing)
+{
+    struct configfs *configfs = &processing->configfs;
+
+    FILE *fp;
+    size_t len = 0;
+    char *line = NULL;
+    ssize_t read;
+    char *ptr;
+    char *entry;
+
+    configfs->mount_point_found = false;
+
+    fp = fopen("/proc/mounts", "r");
+    if (fp)
+    {
+        printf("CONFIGFS: Open /proc/mounts\n");
+
+        while ((read = getline(&line, &len, fp)) != -1) {
+            ptr = strtok(trim(line), " \t");
+            if (ptr == NULL)
+            {
+                continue;
+            }
+
+            entry = trim(ptr);
+
+            if (!strncmp(entry, "configfs", 8))
+            {
+                ptr = strtok(NULL, " \t\n");
+                if (ptr != NULL)
+                {
+                    entry = trim(ptr);
+                    strcpy(configfs->mount_point, ptr);
+                    strcat(configfs->mount_point, "/usb_gadget");
+
+                    configfs->mount_point_found = true;
+                    break;
+                }
+            }
+        }
+        fclose(fp);
+        printf("CONFIGFS: Close /proc/mounts\n");
+    }
+    else
+    {
+        printf("CONFIGFS: ERROR: Can't open /proc/mounts\n");
+    }
+}
+
+int configfs_init(struct processing *processing)
 {
     struct configfs *configfs = &processing->configfs;
 
@@ -264,9 +336,19 @@ int configfs_init(struct processing *processing,
     configfs->streaming.maxpacket = 1023;
     configfs->streaming.interval = 1;
 
-    printf("CONFIGFS: Initial path: %s\n", configfs_path);
+    printf("CONFIGFS: Getting mountpoint for configfs from /proc/mounts\n");
 
-    if (ftw(configfs_path, configfs_read, 20) == -1)
+    configfs_get_mountpoint(processing);
+
+    if (!configfs->mount_point_found)
+    {
+        printf("CONFIGFS: ERROR: Missing configfs mountpoint\n");
+        return -1;
+    }
+
+    printf("CONFIGFS: Initial path: %s\n", configfs->mount_point);
+
+    if (ftw(configfs->mount_point, configfs_read, 20) == -1)
     {
         return -1;
     }

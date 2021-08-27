@@ -62,7 +62,7 @@ int init()
 
     printf("UVC-GADGET: Initialization\n");
 
-    if (configfs_init(&processing, "/sys/kernel/config/usb_gadget") != 1)
+    if (configfs_init(&processing) != 1)
     {
         goto err;
     }
