@@ -36,8 +36,6 @@ static void image_uvc_video_process(struct processing *processing)
         return;
     }
 
-    uvc->qbuf_count++;
-
     if (settings->show_fps)
     {
         uvc->buffers_processed++;

@@ -187,6 +187,13 @@ static void uvc_dump_response(struct processing *processing)
     {
         printf("UVC: Response EMPTY\n");
     }
+    else if (uvc_request->response.length < 0)
+    {
+        printf("UVC: Response STATUS: %d%s\n",
+               uvc_request->response.length,
+               (uvc_request->response.length == -EL2HLT) ? " (-EL2HLT)" : ""
+        );
+    }
     else if (uvc_request->response.length > 0 && uvc_request->response.length < 5)
     {
         memcpy(&value, &uvc_request->response.data[0], uvc_request->response.length);

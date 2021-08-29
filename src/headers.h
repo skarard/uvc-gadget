@@ -315,10 +315,11 @@ struct settings
     bool streaming_status_onboard;
     bool streaming_status_onboard_enabled;
     bool streaming_status_enabled;
-    char *streaming_status_pin;
-    unsigned int blink_on_startup;
-    int frame_interval;
     bool uvc_buffer_required;
+    bool ignore_camera_controls;
+    char *streaming_status_pin;
+    int frame_interval;
+    unsigned int blink_on_startup;
     unsigned int uvc_buffer_size;
 };
 

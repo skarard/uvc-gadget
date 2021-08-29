@@ -385,6 +385,7 @@ void v4l2_init(struct processing *processing,
                unsigned int nbufs)
 {
     struct endpoint_v4l2 *v4l2 = &processing->source.v4l2;
+    struct settings *settings = &processing->settings;
     struct v4l2_capability cap;
 
     if (processing->source.type == ENDPOINT_NONE && device_name)
@@ -426,7 +427,10 @@ void v4l2_init(struct processing *processing,
         processing->source.type = ENDPOINT_V4L2;
         processing->source.state = true;
 
-        v4l2_get_controls(processing);
+        if (!settings->ignore_camera_controls)
+        {
+            v4l2_get_controls(processing);
+        }
         v4l2_get_available_formats(v4l2);
         return;
     }

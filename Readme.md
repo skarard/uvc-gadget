@@ -6,6 +6,7 @@ A new version of uvc-gadget with totally rewriten source code to be more flexibl
 - V4L2 capture device (like /dev/video0)
 - Framebuffer (like /dev/fb0)
 - Image (like image.jpg)
+- STDIN (like ffmpeg | uvc-gadget)
 
 ## How to use
 
@@ -17,7 +18,7 @@ A new version of uvc-gadget with totally rewriten source code to be more flexibl
         -d             Enable debug messages
         -f device      Framebuffer device
         -h             Print this help screen and exit
-        -i image       MJPEG/YUYV image
+        -i path        Path to MJPEG/YUYV image
         -l             Use onboard led0 for streaming status indication
         -m value       STDIN stream dimension (WIDTHxHEIGHT like 800x600)
         -n value       Number of Video buffers (b/w 2 and 32)
@@ -27,6 +28,7 @@ A new version of uvc-gadget with totally rewriten source code to be more flexibl
         -u device      UVC Video Output device
         -v device      V4L2 Video Capture device
         -x             Show fps information
+        -z             Ignore camera controls
 
 ## Examples of usage
 Devices are selected according to availability on the Raspberry Pi Zero W
@@ -46,6 +48,11 @@ Devices are selected according to availability on the Raspberry Pi Zero W
 #### Image
 ```
 ./uvc-gadget -i image.jpg -u /dev/video1 -r 5
+```
+
+#### STDIN
+```
+ffmpeg -hide_banner -loglevel error -i video_640x480.mp4 -video_size 640x480 -vf scale=640:480 -f rawvideo -pix_fmt yuyv422 -thread_type frame - | ./uvc-gadget -s YUYV -a -m 640x480 -x
 ```
 
 ### How to run uvc-gadget with predefined ConfigFS configuration
