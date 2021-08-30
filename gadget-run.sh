@@ -16,7 +16,10 @@ then
     exit
 fi
 
-CONFIGFS_PATH=$(findmnt -t configfs -n --output=target)
+if [ -z "${CONFIGFS_PATH}" ]; then
+    CONFIGFS_PATH=$(findmnt -t configfs -n --output=target)
+fi
+
 GADGET_PATH="${CONFIGFS_PATH}/usb_gadget/${GADGET_NAME}"
 
 echo "INFO:  Gadget config path: ${GADGET_PATH}"

@@ -3,7 +3,9 @@
 echo "INFO: --- Gadget check ---"
 
 # Get configfs mountpoit
-CONFIGFS_PATH=$(findmnt -t configfs -n --output=target)
+if [ -z "${CONFIGFS_PATH}" ]; then
+    CONFIGFS_PATH=$(findmnt -t configfs -n --output=target)
+fi
 
 if [ -e "${CONFIGFS_PATH}" ]; then
     echo "INFO: Configfs path:        ${CONFIGFS_PATH}"
